@@ -1,18 +1,8 @@
-# SHADOW BREAKER
-# TP LAB 1
-# Attaques BruteForce et Dictionnaire
-#
-# Marine LHUILLIER
-# Tristan PINAUDEAU
-#
-# 31/10/2017
-
-
 import sys
 import hashlib
 import string
+import itertools
 import time
-
 
 def main():
     args = sys.argv
@@ -31,6 +21,8 @@ class Account:
     def __init__(self, name, password):
         self.name = name
         self.hash = password
+        self.isBroken = False
+        self.password = ""
 
     def getHash(self):
         return self.hash
@@ -38,11 +30,14 @@ class Account:
     def getName(self):
         return self.name
 
+    def getPass(self):
+        return self.password
+
     def setPass(self, password):
         self.password = password
 
-    def writeToFile(self, file, message):
-        file.write(message)
+    def writeToFile(self, file):
+        file.write(self.name + ' : ' + self.password + "\n")
 
 
 
@@ -50,30 +45,29 @@ class Shadow:
 
     SHADOW_FILE_NAME = "shadow"
     OUTPUT_FILE_NAME = "accounts"
+    DICTIONARY_FILE_NAME = "dico_mini_fr"
     AUTHORIZED_CHAR = string.ascii_letters + string.digits + "@_;#"
+
 
     def __init__(self):
         self.accounts = []
-        self.outputFile = open('output.txt', 'w+')
-
+        self.outputFile = open('output.mdp', 'w+')
+        self.timePassed = 0
 
 
     def crack(self):
         self.extractShadowPasswords()
-        print("Which method do you want to use ? [D/B] D = Dictionary / B = BruteForce")
-
-        # while input() == "d" or input() == "b":
-        if input() == "D":
-            print("We are going to use the dictionary method...")
-            self.dictionary()
-        elif input() == "B":
-            print("We are going to try the brute force method, it could be quite intensive for your hardware and take a lot of time...\nDo you want to try this method ? [Y/n] :")
-            if input() == "Y":
-                self.bruteForce()
-        # else:
-        #     self.crack()
-
+        timePassed = time.clock()
+        self.dictionaryAttack()
+        print("We are going to try the brute force method, it could be quite intensive for your hardware and take a lot of time...")
+        if input("Do you want to try this method ? [Y/n] : ") == "Y": self.bruteForce()
         self.outputFile.close()
+        for account in self.accounts:
+            if account.isBroken() == False:
+                print("Failed to crack the password for user " + account.getName() + ", no match in dictionary")
+                print("-- Time passed : " + str(timePassed) + " secs --")
+                print("")
+
 
     def getPasswords(self):
         passwords = []
@@ -86,7 +80,7 @@ class Shadow:
         print("Opening " + self.SHADOW_FILE_NAME + " file...")
         shadowFile = open(self.SHADOW_FILE_NAME, 'r')
         print("Reading " + self.SHADOW_FILE_NAME + " file...")
-        print("\n")
+        print("")
         for line in shadowFile :
             if line.strip() :
                 account = line.split(':')
@@ -99,97 +93,34 @@ class Shadow:
                     hashToBreak = password[2]
                     self.accounts.append(Account(userName, hashToBreak))
                     print(userName + " : " + hashToBreak)
-        print("\n")
+        print("")
         shadowFile.close()
 
 
     def bruteForce(self):
-        passToTest = ""
-        for char in self.AUTHORIZED_CHAR :
-            passToTest += char
-            for char in self.AUTHORIZED_CHAR :
-                passToTest += char
-                for char in self.AUTHORIZED_CHAR :
-                    passToTest += char
-                    for char in self.AUTHORIZED_CHAR :
-                        passToTest += char
-                        for char in self.AUTHORIZED_CHAR :
-                            passToTest += char
-                            #===== 6 =====#
-                            self.iteratePass(passToTest)
-                            for char in self.AUTHORIZED_CHAR :
-                                passToTest += char
-                                #===== 7 =====#
-                                self.iteratePass(passToTest)
-                                for char in self.AUTHORIZED_CHAR :
-                                    passToTest += char
-                                    #===== 8 =====#
-                                    self.iteratePass(passToTest)
-                                    for char in self.AUTHORIZED_CHAR :
-                                        passToTest += char
-                                        #===== 9 =====#
-                                        self.iteratePass(passToTest)
-                                        for char in self.AUTHORIZED_CHAR :
-                                            passToTest += char
-                                            #===== 10 =====#
-                                            self.iteratePass(passToTest)
-                                            for char in self.AUTHORIZED_CHAR :
-                                                passToTest += char
-                                                #===== 11 =====#
-                                                self.iteratePass(passToTest)
-                                                for char in self.AUTHORIZED_CHAR :
-                                                    passToTest += char
-                                                    #===== 12 =====#
-                                                    self.iteratePass(passToTest)
-                                                    passToTest = passToTest[:-1]
-                                                passToTest = passToTest[:-1]
-                                            passToTest = passToTest[:-1]
-                                        passToTest = passToTest[:-1]
-                                    passToTest = passToTest[:-1]
-                                passToTest = passToTest[:-1]
-                            passToTest = passToTest[:-1]
-                        passToTest = passToTest[:-1]
-                    passToTest = passToTest[:-1]
-                passToTest = passToTest[:-1]
-            passToTest = passToTest[:-1]
+
+        for n in range(6,12):
+            for passToTest in itertools.product(self.AUTHORIZED_CHAR, repeat=n):
+                passToTest = str.join("", passToTest)
+                print(passToTest)
+                if passToTest == "brazil" : input()
+                self.testPass(passToTest)
 
 
-    def iteratePass(self, passToTest):
-        for char in self.AUTHORIZED_CHAR :
-            passToTest += char
-            print(passToTest)
-            for account in self.accounts :
-                if self.testPass(passToTest, account.getHash()) :
-                    account.setPass(passToTest)
-                    account.writeToFile()
-                    print ('!!!!! YEAH !!!!!')
-                    input()
-            passToTest = passToTest[:-1]
+    def dictionaryAttack(self):
+        with open(self.DICTIONARY_FILE_NAME) as fileobj:
+            for line in fileobj:
+                line = line.strip()
+                self.testPass(line)
 
 
-    def testPass(self, passToTest, hashToBreak):
-        hashToTest = hashlib.md5(passToTest.encode('utf-8')).hexdigest()
-        if hashToTest == hashToBreak : return True
-
-
-    def dictionary(self):
-        for account in self.accounts:
-            hash_to_crack = account.getHash()
-            dict_file = "dico_mini_fr"
-            passFound = False
-            time_passed = time.clock()  # start time
-
-            with open(dict_file) as fileobj:
-                for line in fileobj:
-                    line = line.strip()
-                    if hashlib.md5(line.encode('utf-8')).hexdigest() == hash_to_crack:
-                        passFound = True
-                        print("Successfully cracked the password for user " + account.getName() + ", it's : " + line + "  - Time passed : " + str(time_passed) + " secs")
-                        account.writeToFile(self.outputFile, "Successfully cracked the password for user " + account.getName() + ", it's : " + line + "  - Time passed : " + str(time_passed) + " secs" + '\n')
-
-            if not passFound:
-                print("Failed to crack the password for user : " + account.getName() + ", no match" + "  - Time passed : " + str(time_passed) + " secs")
-                account.writeToFile(self.outputFile, "Failed to crack the password for user " + account.getName() + ", no match in dictionary" + "  - Time passed : " + str(time_passed) + " secs" + '\n')
-
+    def testPass(self, passToTest):
+         for account in self.accounts :
+            if hashlib.md5(passToTest.encode('utf-8')).hexdigest() ==  account.getHash():
+                account.setPass(passToTest)
+                print("Successfully cracked the password for user " + account.getName() + " : " + account.getPass())
+                print("-- Time passed : " + str(self.timePassed) + " secs --")
+                print("")
+                account.writeToFile(self.outputFile)
 
 main()

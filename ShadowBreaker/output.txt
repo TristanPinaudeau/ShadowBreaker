@@ -1,3 +1,0 @@
-Successfully cracked the password for user root, it's : t3_p@hEN_v12  - Time passed : 3.9506172839506174e-07 secs
-Failed to crack the password for user fred, no match in dictionary  - Time passed : 0.015096493827160494 secs
-Successfully cracked the password for user giselle, it's : brazil  - Time passed : 0.029268148148148147 secs
