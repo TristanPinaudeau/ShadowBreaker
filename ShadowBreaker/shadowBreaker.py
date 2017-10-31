@@ -36,9 +36,9 @@ class Account:
     def setPass(self, password):
         self.password = password
 
-    def writeToFile(self):
+    def writeToFile(self, message):
         outputFile = open("output.txt", "a+")
-        outputFile.write(self.name + ' : ' + self.password + "\n")
+        outputFile.write(message)
         outputFile.close()
 
 
@@ -117,9 +117,9 @@ class Shadow:
          for account in self.accounts :
             if hashlib.md5(passToTest.encode('utf-8')).hexdigest() ==  account.getHash():
                 account.setPass(passToTest)
-                print("Successfully cracked the password for user " + account.getName() + " : " + account.getPass())
-                print("-- Time passed : " + str(self.timePassed) + " secs --")
-                print("")
-                account.writeToFile()
+                message = "Successfully cracked the password for user " + account.getName() + " : " + \
+                          account.getPass() + "\n-- Time passed : " + str(self.timePassed) + " secs --"
+                print(message)
+                account.writeToFile(message)
 
 main()
