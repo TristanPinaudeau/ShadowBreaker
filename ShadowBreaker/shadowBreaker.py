@@ -36,8 +36,10 @@ class Account:
     def setPass(self, password):
         self.password = password
 
-    def writeToFile(self, file):
-        file.write(self.name + ' : ' + self.password + "\n")
+    def writeToFile(self):
+        outputFile = open("output.txt", "a+")
+        outputFile.write(self.name + ' : ' + self.password + "\n")
+        outputFile.close()
 
 
 
@@ -51,7 +53,6 @@ class Shadow:
 
     def __init__(self):
         self.accounts = []
-        self.outputFile = open('output.mdp', 'w+')
         self.timePassed = 0
 
 
@@ -61,7 +62,6 @@ class Shadow:
         self.dictionaryAttack()
         print("We are going to try the brute force method, it could be quite intensive for your hardware and take a lot of time...")
         if input("Do you want to try this method ? [Y/n] : ") == "Y": self.bruteForce()
-        self.outputFile.close()
         for account in self.accounts:
             if account.isBroken() == False:
                 print("Failed to crack the password for user " + account.getName() + ", no match in dictionary")
@@ -98,7 +98,6 @@ class Shadow:
 
 
     def bruteForce(self):
-
         for n in range(6,12):
             for passToTest in itertools.product(self.AUTHORIZED_CHAR, repeat=n):
                 passToTest = str.join("", passToTest)
@@ -121,6 +120,6 @@ class Shadow:
                 print("Successfully cracked the password for user " + account.getName() + " : " + account.getPass())
                 print("-- Time passed : " + str(self.timePassed) + " secs --")
                 print("")
-                account.writeToFile(self.outputFile)
+                account.writeToFile()
 
 main()
